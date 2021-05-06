@@ -1,3 +1,4 @@
+import { borderRadius } from "@material-ui/system";
 import React, { useState } from "react";
 import ReactDOM from "react-dom";
 
@@ -8,36 +9,45 @@ const rowStyle = {
 const squareStyle = {
   width: "60px",
   height: "60px",
-  backgroundColor: "#ddd",
+  backgroundColor: "b68973",
   margin: "4px",
   display: "flex",
   justifyContent: "center",
   alignItems: "center",
-  fontSize: "20px",
-  color: "blue"
+  fontSize: "30px",
+  borderRadius: "5px"
 };
 
 const boardStyle = {
-  backgroundColor: "#101012",
+  backgroundColor: "eabf9f",
   width: "208px",
   alignItems: "center",
   justifyContent: "center",
   display: "flex",
   flexDirection: "column",
-  border: "3px #eee solid"
+  borderRadius: "5px"
 };
 
 const containerStyle = {
   display: "flex",
   alignItems: "center",
-  flexDirection: "column"
+  flexDirection: "column",
+  backgroundColor: "#1e212d",
+
+  position: "fixed",
+  right: "0",
+  bottom: "0",
+  width: "100%",
+  height: "100%"
 };
 
 const instructionsStyle = {
   marginTop: "5px",
   marginBottom: "5px",
   fontWeight: "bold",
-  fontSize: "16px"
+  fontSize: "16px",
+  color: "#eabf9f",
+  fontFamily: "Verdana, sans-serif"
 };
 
 const buttonStyle = {
@@ -45,9 +55,11 @@ const buttonStyle = {
   marginBottom: "16px",
   width: "80px",
   height: "40px",
-  backgroundColor: "#8acaca",
-  color: "white",
-  fontSize: "16px"
+  backgroundColor: "eabf9f",
+  color: "#1e212d",
+  fontSize: "16px",
+  fontFamily: "Verdana, sans-serif",
+  borderRadius: "5px"
 };
 
 class Square extends React.Component {
@@ -71,7 +83,7 @@ class Square extends React.Component {
 
   showPoint(player) {
     this.setState({
-      content: player ? "X" : "O"
+      content: player ? "🐱" : "🥕"
     });
   }
 
@@ -104,7 +116,8 @@ class Board extends React.Component {
       moves: { true: [], false: [] },
       winner: "None",
       block: false,
-      reset: false
+      reset: false,
+      nextPlayer: "🐱"
     };
 
     this.checkWin = this.checkWin.bind(this);
@@ -112,6 +125,73 @@ class Board extends React.Component {
     this.handleReset = this.handleReset.bind(this);
 
     this.square = React.createRef();
+  }
+
+  handleTurn(clickedSquare) {
+    const player = this.state.togglePlayer;
+    const oldMoves = this.state.moves;
+    const oldPlayerMoves = player ? oldMoves.true : oldMoves.false;
+    const notPlayerMoves = player ? oldMoves.false : oldMoves.true;
+
+    const playerMoves = [clickedSquare, ...oldPlayerMoves];
+
+    if (player) {
+      this.setState({
+        moves: {
+          true: playerMoves,
+          false: notPlayerMoves,
+          [clickedSquare]: this.state.togglePlayer
+        },
+        togglePlayer: !this.state.togglePlayer,
+        nextPlayer: this.state.togglePlayer ? "🥕" : "🐱"
+      });
+    }
+
+    if (!player) {
+      this.setState({
+        moves: {
+          true: notPlayerMoves,
+          false: playerMoves,
+          [clickedSquare]: this.state.togglePlayer
+        },
+        togglePlayer: !this.state.togglePlayer,
+        nextPlayer: this.state.togglePlayer ? "🥕" : "🐱"
+      });
+    }
+
+    const winner = this.checkWin(playerMoves);
+    this.checkGameOver();
+
+    if (winner) {
+      this.setState({
+        winner: this.state.togglePlayer ? "🐱" : "🥕",
+        block: true,
+        nextPlayer: ""
+      });
+    }
+  }
+
+  handleReset() {
+    this.setState({
+      togglePlayer: true,
+      moves: { true: [], false: [] },
+      winner: "None",
+      block: false,
+      reset: !this.state.reset,
+      nextPlayer: "🐱"
+    });
+  }
+
+  checkGameOver() {
+    const secondPlayerMoves = this.state.moves.false.length;
+
+    if (secondPlayerMoves === 4) {
+      this.setState({
+        winner: "Game Over",
+        block: true,
+        nextPlayer: ""
+      });
+    }
   }
 
   checkWin(playerMoves) {
@@ -145,74 +225,11 @@ class Board extends React.Component {
     return result;
   }
 
-  handleTurn(clickedSquare) {
-    const player = this.state.togglePlayer;
-    const oldMoves = this.state.moves;
-    const oldPlayerMoves = player ? oldMoves.true : oldMoves.false;
-    const notPlayerMoves = player ? oldMoves.false : oldMoves.true;
-
-    const playerMoves = [clickedSquare, ...oldPlayerMoves];
-
-    if (player) {
-      this.setState({
-        moves: {
-          true: playerMoves,
-          false: notPlayerMoves,
-          [clickedSquare]: this.state.togglePlayer
-        },
-        togglePlayer: !this.state.togglePlayer
-      });
-    }
-
-    if (!player) {
-      this.setState({
-        moves: {
-          true: notPlayerMoves,
-          false: playerMoves,
-          [clickedSquare]: this.state.togglePlayer
-        },
-        togglePlayer: !this.state.togglePlayer
-      });
-    }
-
-    const winner = this.checkWin(playerMoves);
-    this.checkGameOver();
-
-    if (winner) {
-      console.log(this.state.togglePlayer ? "x" : "O");
-      this.setState({
-        winner: this.state.togglePlayer ? "x" : "O",
-        block: true
-      });
-    }
-  }
-
-  handleReset() {
-    this.setState({
-      togglePlayer: true,
-      moves: { true: [], false: [] },
-      winner: "None",
-      block: false,
-      reset: !this.state.reset
-    });
-  }
-
-  checkGameOver() {
-    console.log(this.state.moves);
-    const secondPlayerMoves = this.state.moves.false.length;
-
-    if (secondPlayerMoves === 4) {
-      this.setState({
-        winner: "Game Over"
-      });
-    }
-  }
-
   render() {
     return (
       <div style={containerStyle} className="gameBoard">
         <div id="statusArea" className="status" style={instructionsStyle}>
-          Next player: <span>{this.state.togglePlayer ? "x" : "o"}</span>
+          Next player: <span>{this.state.nextPlayer}</span>
         </div>
         <div id="winnerArea" className="winner" style={instructionsStyle}>
           Winner: <span>{this.state.winner}</span>
